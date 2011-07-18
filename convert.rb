@@ -1,60 +1,20 @@
-#!/usr/bin/evn ruby
-# commbank_csv_parse to ledger .dat
+#!/usr/bin/ruby
 
-class Account
-  attr_reader :transactions
-  
-  def initialize(name)
-    @name = name
-    @transactions = []
-  end
-  
-  def add(*args)
-    @transactions << Transaction.new(*args, self)
-  end
-  
-  def to_s
-    @name.to_s
-  end
-  
-  def to_dat
-    @transactions.join {|t| t.to_s}
-  end
+account = ARGV[0]
+
+def trimq(x) 
+	return x.gsub(/"/,'')
 end
 
-class Transaction
-  def initialize(date, transfer, name, bal, account)
-    @date = date
-    @transfer = transfer
-    @name = name
-    @bal = bal
-    @account = account
-  end
-  
-  def transfer
-    @transfer.gsub(/\+/, '')
-  end
-  
-  def destination
-    # Determine where this transaction went to through regex.
-    # @name
-    "Expenses:Transaction"
-  end
-  
-  def to_s
-    "#{@date} #{@name}\n    #{@account.to_s}    $#{transfer}\n    #{destination}\n"
-  end
+def revdate(x) 
+	return x.split("/").reverse.join("/")
 end
 
-require 'csv'
-
-csv = CSV.read(ARGV[0])
-
-account = Account.new("Assets:Bank:CommBank")
-
-csv.shift
-csv.each do |row|
-  account.add(row[0], row[1], row[2], row[3])
-end
-
-File.open("output.dat", 'w') {|f| f.write( account.to_dat)}
+STDIN.each_line{ |line|
+	arr = line.split ','
+	if (arr.length == 4) then
+        	puts "#{revdate(arr[0])} #{trimq(arr[2])}"
+	        puts "    #{account} 		$#{trimq(arr[1]).gsub(/\+/,'')}"
+        	puts ""
+	end
+}
